@@ -10,6 +10,7 @@ import mqttPattern from 'mqtt-pattern'
 //import { poll } from './poll-metrics.mjs'
 
 var registeredMetrics = {}
+var topics = {}
 
 // Config
 dotenv.config()
@@ -17,7 +18,7 @@ dotenv.config()
 const configPath = process.env.CONFIG_PATH || '.config'
 const configFile = fs.readFileSync(configPath + '/config.yaml', 'utf8')
 const config = parseYaml(configFile)
-console.log(config)
+//console.log(config)
 
 // Prometheus client
 const register = new client.Registry()
@@ -30,25 +31,33 @@ const mqttClient = mqtt.connect(config.mqtt?.url, config.mqtt?.options )
 // Connect to the MQTT broker and subscribe to relevant topics
 mqttClient.on('connect', function () {
   console.log(`Connected to MQTT broker at ${config.mqtt?.url}`)
-	var topic = 'home/outside/json'
-	mqttClient.subscribe(topic, (err) => {
-    if (err) {
-			console.error(`Error subscribing to '${topic}'`, err)
-    } else {
-			console.log(`Subscribed to '${topic}'`)
-		}
-  })
+  for(let p of config.patterns) {
+    let topic = mqttPattern.clean(p.pattern)
+    topics[topic] = p
+    mqttClient.subscribe(topic, (err) => {
+      if (err) {
+        console.error(`Error subscribing to '${topic}'`, err)
+      } else {
+        console.log(`Subscribed to '${topic}'`)
+      }
+    })
+  }
 })
 
-mqttClient.on("message", (topic, message) => {
-  // message is Buffer
-  console.log(message.toString())
+mqttClient.on('message', (t, message) => {
+  if (!(t in topics)) {
+    console.error(`Unexpected topic ${t}`)
+    return
+  }
+  topic = topics[t]
+  msg = message.toString()
+  console.log(`${t} - ${topic[pattern]}`)
 })
 
 // House keeping
 function handleExit(signal) {
   console.log(`Exiting due to signal ${signal}`)
-	schedule.gracefulShutdown().then(() => process.exit(0))
+  schedule.gracefulShutdown().then(() => process.exit(0))
 }
 process.on('SIGINT', handleExit)
 process.on('SIGTERM', handleExit)
@@ -58,8 +67,8 @@ process.on('SIGTERM', handleExit)
 
 var m = 'test'
 const metrics = new client.Gauge({
-	name: m,
-	help: `metric ${m}`,
+  name: m,
+  help: `metric ${m}`,
 })
 register.registerMetric(metrics)
 registeredMetrics[m] = metrics
@@ -79,17 +88,17 @@ const server = express()
 
 // Populate metrics
 server.get('/metrics', async (req, res) => {
-	try {
-		res.set('Content-Type', register.contentType)
-		res.end(await register.metrics())
-	} catch (ex) {
-		console.error(ex)
-		res.status(500).end(ex)
-	}
+  try {
+    res.set('Content-Type', register.contentType)
+    res.end(await register.metrics())
+  } catch (ex) {
+    console.error(ex)
+    res.status(500).end(ex)
+  }
 })
 
 const port = process.env.PORT || 8080
 console.log(
-	`Server listening to ${port}, metrics exposed on /metrics endpoint`,
+  `Server listening to ${port}, metrics exposed on /metrics endpoint`,
 )
 server.listen(port)
