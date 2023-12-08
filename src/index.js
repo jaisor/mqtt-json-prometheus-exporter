@@ -7,10 +7,9 @@ import schedule from 'node-schedule'
 import moment from 'moment'
 import * as mqtt from 'mqtt'
 import mqttPattern from 'mqtt-pattern'
-//import { poll } from './poll-metrics.mjs'
+import { processMessage } from './metrics-helper.mjs'
 
-var registeredMetrics = {}
-var topics = {}
+var patterns = []
 
 // Config
 dotenv.config()
@@ -33,7 +32,8 @@ mqttClient.on('connect', function () {
   console.log(`Connected to MQTT broker at ${config.mqtt?.url}`)
   for(let p of config.patterns) {
     let topic = mqttPattern.clean(p.pattern)
-    topics[topic] = p
+    p['topic'] = topic
+    patterns.push(p)
     mqttClient.subscribe(topic, (err) => {
       if (err) {
         console.error(`Error subscribing to '${topic}'`, err)
@@ -44,14 +44,13 @@ mqttClient.on('connect', function () {
   }
 })
 
-mqttClient.on('message', (t, message) => {
-  if (!(t in topics)) {
-    console.error(`Unexpected topic ${t}`)
-    return
+mqttClient.on('message', (topic, message) => {
+  for(let p of patterns) {
+    if (processMessage(p, topic, message)) {
+      return
+    }
   }
-  topic = topics[t]
-  msg = message.toString()
-  console.log(`${t} - ${topic[pattern]}`)
+  console.error(`Unexpected topic ${t}`)
 })
 
 // House keeping
@@ -63,16 +62,6 @@ process.on('SIGINT', handleExit)
 process.on('SIGTERM', handleExit)
 
 //
-
-
-var m = 'test'
-const metrics = new client.Gauge({
-  name: m,
-  help: `metric ${m}`,
-})
-register.registerMetric(metrics)
-registeredMetrics[m] = metrics
-registeredMetrics[m].set(Number(10))
 
 async function runTask(fireDate) {
   console.log(moment().format('lll') + ` (${fireDate}) : Running task`)
