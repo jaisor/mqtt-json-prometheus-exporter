@@ -20,7 +20,7 @@ function setMetric(m, v, labels) {
       help: `MQTT metric ${m}`,
       labelNames: isObject(labels) ? Object.keys(labels) : [],
     })
-    console.log(`Registering '${m}'='${v}' - ${JSON.stringify(labels)}`)
+    console.log(`Registering '${m}'=${v} - ${JSON.stringify(labels)}`)
     register.registerMetric(metric)
   }
   metric.labels( labels || {} ).set(Number(v))
@@ -32,6 +32,9 @@ function processJsonObject(obj, prefix, params, recursive) {
       setMetric(globalPrefix + (prefix || '') + name.toLowerCase(), value, params)
     } else if (isObject(value) && recursive) {
       processJsonObject(value, prefix + name.toLowerCase() + '_', params, recursive)
+    } else {
+      // TODO: Allow config to specify logging these as warn
+      console.debug(`Unsupported value '${value}' for metric name '${name}'`)
     }
   }
 }
@@ -43,7 +46,7 @@ function processMessage(pattern, topic, message) {
     return false
   }
 
-  console.log(`Matched ${topic} to ${pattern.pattern} with ${JSON.stringify(params)}`)
+  console.debug(`Matched ${topic} to ${pattern.pattern} with ${JSON.stringify(params)}`)
   let msg = message.toString()
   
   //console.log(params)
