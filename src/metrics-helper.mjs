@@ -1,18 +1,33 @@
 import mqttPattern from 'mqtt-pattern'
+import * as promClient from 'prom-client'
 
 var registeredMetrics = {}
 
-function addOrUpdate(fqm, m, v, pattern) {
+// Prometheus client
+const register = new promClient.Registry()
+
+function initRegister(prefix = '', labels = {}) {
+  register.setDefaultLabels(labels)
+  promClient.collectDefaultMetrics({ 
+    register, 
+    prefix: prefix,
+    labels: labels
+  })
+}
+
+const isNumeric = (num) => (typeof(num) === 'number' || typeof(num) === "string" && num.trim() !== '') && !isNaN(num);
+
+function addOrUpdate(fqm, m, v, labels) {
   if (!(fqm in registeredMetrics)) {
-    const metrics = new client.Gauge({
+    const metrics = new promClient.Gauge({
       name: m,
       help: `MQTT metric ${m}`,
-      labelNames: ['energy_site_id', 'site_name', 'resource_type'],
+      labelNames: labels.keys || [],
     });
     register.registerMetric(metrics);
     registeredMetrics[fqm] = metrics;
   }
-  registeredMetrics[fqm].labels( p.energy_site_id, p.site_name, p.resource_type ).set(Number(v));
+  registeredMetrics[fqm].labels( labels ).set(Number(v));
 }
 
 function processMessage(pattern, topic, message) {
@@ -23,10 +38,10 @@ function processMessage(pattern, topic, message) {
   }
 
   console.log(`Matched ${topic} with ${pattern.pattern}`)
-  
-  console.log(params)
   let msg = message.toString()
-  console.log(msg)
+  
+  //console.log(params)
+  //console.log(msg)
   
   switch (pattern.format) {
     case 'val': {
@@ -34,11 +49,22 @@ function processMessage(pattern, topic, message) {
     } break
     default: {
       // json
-      console.log(`json: ${JSON.parse(msg)}`)
+      try {
+        let obj = JSON.parse(msg)
+        for (const [name, value] of Object.entries(obj)) {
+          if (isNumeric(value)) {
+            addOrUpdate(topic + name, pattern.prefix + name, value, params)
+            //console.log(`${name}: ${Number(value)}`)
+          }
+        }
+        //console.log(`json: ${JSON.stringify(obj)}`)
+      } catch (e) {
+        return console.error(e)
+      }
     }
   }
 
   return true
 }
 
-export { processMessage }; 
+export { initRegister, processMessage, register }; 

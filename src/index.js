@@ -2,12 +2,11 @@ import dotenv from 'dotenv'
 import fs from 'fs'
 import { parse as parseYaml } from 'yaml'
 import express from 'express'
-import * as client from 'prom-client'
 import schedule from 'node-schedule'
 import moment from 'moment'
 import * as mqtt from 'mqtt'
 import mqttPattern from 'mqtt-pattern'
-import { processMessage } from './metrics-helper.mjs'
+import { initRegister, processMessage, register } from './metrics-helper.mjs'
 
 var patterns = []
 
@@ -20,12 +19,10 @@ const config = parseYaml(configFile)
 //console.log(config)
 
 // Prometheus client
-const register = new client.Registry()
-register.setDefaultLabels(config.global?.labels || {})
-client.collectDefaultMetrics({ register, prefix: config.global?.prefix || '' })
+initRegister(config.global?.prefix, config.global?.labels)
 
 // MQTT client 
-const mqttClient = mqtt.connect(config.mqtt?.url, config.mqtt?.options )
+const mqttClient = mqtt.connect(config.mqtt?.url, config.mqtt?.options)
 
 // Connect to the MQTT broker and subscribe to relevant topics
 mqttClient.on('connect', function () {
@@ -50,12 +47,13 @@ mqttClient.on('message', (topic, message) => {
       return
     }
   }
-  console.error(`Unexpected topic ${t}`)
+  console.error(`Unexpected topic ${topic}`)
 })
 
 // House keeping
 function handleExit(signal) {
   console.log(`Exiting due to signal ${signal}`)
+  mqttClient.end(true)
   schedule.gracefulShutdown().then(() => process.exit(0))
 }
 process.on('SIGINT', handleExit)
