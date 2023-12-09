@@ -1,0 +1,25 @@
+mqtt:
+  url: mqtt://server.lan:1883
+  options:
+    # full list of options at https://www.npmjs.com/package/mqtt#mqttclientstreambuilder-options
+global:
+  prefix: mqtt_exporter_ # prefix pre-pendend to all exported metrics, in addition to the pattern prefix if specified
+  labels: # these labels are added to all exported metrics
+    app: mqtt-json-prometheus-exporter
+patterns:
+  - pattern: home/+device/json # the value from '+device' part of the topic will be added to a label called 'device'
+    format: json # 'json' is the default, other option is 'val' for a scalar value
+    labels:  # additional labels to associate the metric with
+      location: home
+  - pattern: tele/+device/SENSOR
+    prefix: tm_ # default prefix is blank
+    recursive: Yes # also parse entries that are json objects themselves
+  - pattern: tele/+device/STATE
+    prefix: tms_
+    recursive: Yes
+  - pattern: tele/+device/LWT
+    prefix: tms_
+    format: val
+    value-default: 0 # 0 is default if unspecified
+    value-map:
+      Online: 1

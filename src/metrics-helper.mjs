@@ -1,33 +1,39 @@
 import mqttPattern from 'mqtt-pattern'
 import * as promClient from 'prom-client'
 
-var registeredMetrics = {}
-
 // Prometheus client
 const register = new promClient.Registry()
+var globalPrefix = ''
 
-function initRegister(prefix = '', labels = {}) {
-  register.setDefaultLabels(labels)
-  promClient.collectDefaultMetrics({ 
-    register, 
-    prefix: prefix,
-    labels: labels
-  })
-}
+const isNumeric = (num) => (typeof(num) === 'number' || typeof(num) === "string" && num.trim() !== '') && !isNaN(num)
+const isObject = (value) => Object.prototype.toString.call(value) === '[object Object]'
 
-const isNumeric = (num) => (typeof(num) === 'number' || typeof(num) === "string" && num.trim() !== '') && !isNaN(num);
-
-function addOrUpdate(fqm, m, v, labels) {
-  if (!(fqm in registeredMetrics)) {
-    const metrics = new promClient.Gauge({
+function setMetric(m, v, labels) {
+  if (!promClient.validateMetricName(m)) {
+    console.warn(`Invalid metric name: ${m}`)
+    return
+  }
+  let metric = register.getSingleMetric(m)
+  if (!metric) {
+    metric = new promClient.Gauge({
       name: m,
       help: `MQTT metric ${m}`,
-      labelNames: labels.keys || [],
-    });
-    register.registerMetric(metrics);
-    registeredMetrics[fqm] = metrics;
+      labelNames: isObject(labels) ? Object.keys(labels) : [],
+    })
+    console.log(`Registering '${m}'='${v}' - ${JSON.stringify(labels)}`)
+    register.registerMetric(metric)
   }
-  registeredMetrics[fqm].labels( labels ).set(Number(v));
+  metric.labels( labels || {} ).set(Number(v))
+}
+
+function processJsonObject(obj, prefix, params, recursive) {
+  for (const [name, value] of Object.entries(obj)) {
+    if (isNumeric(value)) {
+      setMetric(globalPrefix + (prefix || '') + name.toLowerCase(), value, params)
+    } else if (isObject(value) && recursive) {
+      processJsonObject(value, prefix + name.toLowerCase() + '_', params, recursive)
+    }
+  }
 }
 
 function processMessage(pattern, topic, message) {
@@ -37,7 +43,7 @@ function processMessage(pattern, topic, message) {
     return false
   }
 
-  console.log(`Matched ${topic} with ${pattern.pattern}`)
+  console.log(`Matched ${topic} to ${pattern.pattern} with ${JSON.stringify(params)}`)
   let msg = message.toString()
   
   //console.log(params)
@@ -45,19 +51,21 @@ function processMessage(pattern, topic, message) {
   
   switch (pattern.format) {
     case 'val': {
-      console.log(`val: ${Number(msg)}`)
+      let value = 0
+      if (isNumeric(msg)) {
+        value = Number(msg)
+      } else {
+        value = pattern['value-default'] || 0
+        if (isObject(pattern['value-map']) && msg in pattern['value-map']) {
+          value = pattern['value-map'][msg]
+        }
+      }
+      setMetric(globalPrefix + (pattern.prefix || '') + topic.split('/').pop().toLowerCase(), value, params)
     } break
     default: {
       // json
       try {
-        let obj = JSON.parse(msg)
-        for (const [name, value] of Object.entries(obj)) {
-          if (isNumeric(value)) {
-            addOrUpdate(topic + name, pattern.prefix + name, value, params)
-            //console.log(`${name}: ${Number(value)}`)
-          }
-        }
-        //console.log(`json: ${JSON.stringify(obj)}`)
+        processJsonObject(JSON.parse(msg), pattern.prefix, params, pattern.recursive)
       } catch (e) {
         return console.error(e)
       }
@@ -67,4 +75,14 @@ function processMessage(pattern, topic, message) {
   return true
 }
 
-export { initRegister, processMessage, register }; 
+function initRegister(prefix = '', labels = {}) {
+  globalPrefix = prefix
+  register.setDefaultLabels(labels)
+  promClient.collectDefaultMetrics({ 
+    register, 
+    prefix: prefix,
+    labels: labels
+  })
+}
+
+export { initRegister, processMessage, register } 

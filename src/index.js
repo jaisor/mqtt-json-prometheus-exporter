@@ -19,7 +19,7 @@ const config = parseYaml(configFile)
 //console.log(config)
 
 // Prometheus client
-initRegister(config.global?.prefix, config.global?.labels)
+initRegister(config.global?.prefix || '', config.global?.labels)
 
 // MQTT client 
 const mqttClient = mqtt.connect(config.mqtt?.url, config.mqtt?.options)
@@ -65,10 +65,10 @@ async function runTask(fireDate) {
   console.log(moment().format('lll') + ` (${fireDate}) : Running task`)
 }
 
-runTask(moment().format('lll'))
-schedule.scheduleJob("*/1 * * * *", function(fireDate){
-  runTask(fireDate)
-})
+//runTask(moment().format('lll'))
+//schedule.scheduleJob("*/1 * * * *", function(fireDate){
+//  runTask(fireDate)
+//})
 
 // Express server
 const server = express()
