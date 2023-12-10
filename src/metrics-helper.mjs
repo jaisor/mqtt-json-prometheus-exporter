@@ -1,5 +1,6 @@
 import mqttPattern from 'mqtt-pattern'
 import * as promClient from 'prom-client'
+import logger from 'winston'
 
 // Prometheus client
 const register = new promClient.Registry()
@@ -10,7 +11,7 @@ const isObject = (value) => Object.prototype.toString.call(value) === '[object O
 
 function setMetric(m, v, labels) {
   if (!promClient.validateMetricName(m)) {
-    console.warn(`Invalid metric name: ${m}`)
+    logger.warn(`Invalid metric name: ${m}`)
     return
   }
   let metric = register.getSingleMetric(m)
@@ -20,7 +21,7 @@ function setMetric(m, v, labels) {
       help: `MQTT metric ${m}`,
       labelNames: isObject(labels) ? Object.keys(labels) : [],
     })
-    console.info(`Registering '${m}'=${v} - ${JSON.stringify(labels)}`)
+    logger.info(`Registering '${m}'=${v} - ${JSON.stringify(labels)}`)
     register.registerMetric(metric)
   }
   metric.labels( labels || {} ).set(Number(v))
@@ -34,7 +35,7 @@ function processJsonObject(obj, prefix, params, recursive) {
       processJsonObject(value, prefix + name.toLowerCase() + '_', params, recursive)
     } else {
       // TODO: Allow config to specify logging these as warn
-      console.debug(`Unsupported value '${value}' for metric name '${name}'`)
+      logger.debug(`Unsupported value '${value}' for metric name '${name}'`)
     }
   }
 }
@@ -46,11 +47,11 @@ function processMessage(pattern, topic, message) {
     return false
   }
 
-  console.debug(`Matched ${topic} to ${pattern.pattern} with ${JSON.stringify(params)}`)
+  logger.debug(`Matched ${topic} to ${pattern.pattern} with ${JSON.stringify(params)}`)
   let msg = message.toString()
   
-  //console.debug(params)
-  //console.debug(msg)
+  //logger.debug(params)
+  //logger.debug(msg)
   
   switch (pattern.format) {
     case 'val': {
@@ -70,7 +71,7 @@ function processMessage(pattern, topic, message) {
       try {
         processJsonObject(JSON.parse(msg), pattern.prefix, params, pattern.recursive)
       } catch (e) {
-        return console.error(e)
+        return logger.error(e)
       }
     }
   }
