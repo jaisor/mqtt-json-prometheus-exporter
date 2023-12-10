@@ -19,6 +19,7 @@
     "node-schedule": "^2.1.1",
     "prom-client": "^15.0.0",
     "request": "^2.88.2",
+    "winston": "^3.11.0",
     "yaml": "^2.3.4"
   }
 }

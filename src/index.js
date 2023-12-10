@@ -16,7 +16,7 @@ dotenv.config()
 const configPath = process.env.CONFIG_PATH || '.config'
 const configFile = fs.readFileSync(configPath + '/config.yaml', 'utf8')
 const config = parseYaml(configFile)
-//console.log(config)
+//console.debug(config)
 
 // Prometheus client
 initRegister(config.global?.prefix || '', config.global?.labels)
@@ -26,7 +26,7 @@ const mqttClient = mqtt.connect(config.mqtt?.url, config.mqtt?.options)
 
 // Connect to the MQTT broker and subscribe to relevant topics
 mqttClient.on('connect', function () {
-  console.log(`Connected to MQTT broker at ${config.mqtt?.url}`)
+  console.info(`Connected to MQTT broker at ${config.mqtt?.url}`)
   for(let p of config.patterns) {
     let topic = mqttPattern.clean(p.pattern)
     p['topic'] = topic
@@ -35,7 +35,7 @@ mqttClient.on('connect', function () {
       if (err) {
         console.error(`Error subscribing to '${topic}'`, err)
       } else {
-        console.log(`Subscribed to '${topic}'`)
+        console.info(`Subscribed to '${topic}'`)
       }
     })
   }
@@ -52,7 +52,7 @@ mqttClient.on('message', (topic, message) => {
 
 // House keeping
 function handleExit(signal) {
-  console.log(`Exiting due to signal ${signal}`)
+  console.info(`Exiting due to signal ${signal}`)
   mqttClient.end(true)
   schedule.gracefulShutdown().then(() => process.exit(0))
 }
@@ -62,7 +62,7 @@ process.on('SIGTERM', handleExit)
 //
 
 async function runTask(fireDate) {
-  console.log(moment().format('lll') + ` (${fireDate}) : Running task`)
+  console.info(moment().format('lll') + ` (${fireDate}) : Running task`)
 }
 
 //runTask(moment().format('lll'))
@@ -85,7 +85,5 @@ server.get('/metrics', async (req, res) => {
 })
 
 const port = process.env.PORT || 8080
-console.log(
-  `Server listening to ${port}, metrics exposed on /metrics endpoint`,
-)
+console.info(`Server listening to ${port}, metrics exposed on /metrics endpoint`)
 server.listen(port)

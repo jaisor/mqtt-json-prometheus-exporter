@@ -12,6 +12,7 @@ FROM node:16-slim AS build
 RUN mkdir -p /config
 
 ENV PORT=8080
+ENV LOG_LEVEL=info
 
 WORKDIR /usr/src/app
 

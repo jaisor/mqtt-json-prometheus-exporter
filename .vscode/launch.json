@@ -16,7 +16,10 @@
       "program": "${workspaceFolder}\\src\\index.js",
       "restart": true,
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "LOG_LEVEL": "info"
+      }
      },
      {
       "type": "node",

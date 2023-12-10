@@ -20,7 +20,7 @@ function setMetric(m, v, labels) {
       help: `MQTT metric ${m}`,
       labelNames: isObject(labels) ? Object.keys(labels) : [],
     })
-    console.log(`Registering '${m}'=${v} - ${JSON.stringify(labels)}`)
+    console.info(`Registering '${m}'=${v} - ${JSON.stringify(labels)}`)
     register.registerMetric(metric)
   }
   metric.labels( labels || {} ).set(Number(v))
@@ -49,8 +49,8 @@ function processMessage(pattern, topic, message) {
   console.debug(`Matched ${topic} to ${pattern.pattern} with ${JSON.stringify(params)}`)
   let msg = message.toString()
   
-  //console.log(params)
-  //console.log(msg)
+  //console.debug(params)
+  //console.debug(msg)
   
   switch (pattern.format) {
     case 'val': {
