@@ -3,7 +3,7 @@ mqtt:
   options:
     # full list of options at https://www.npmjs.com/package/mqtt#mqttclientstreambuilder-options
 global:
-  prefix: mqtt_exporter_ # prefix pre-pendend to all exported metrics, in addition to the pattern prefix if specified
+  prefix: mqtt_exporter_ # prefix pre-prepended to all exported metrics, in addition to the pattern prefix if specified
   labels: # these labels are added to all exported metrics
     app: mqtt-json-prometheus-exporter
 patterns:
