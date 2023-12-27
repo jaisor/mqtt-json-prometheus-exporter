@@ -12,7 +12,7 @@ logger.configure({
   level: process.env.LOG_LEVEL || 'info',
   format: logger.format.cli(),
   transports: [new logger.transports.Console()],
-});
+})
 
 var patterns = []
 

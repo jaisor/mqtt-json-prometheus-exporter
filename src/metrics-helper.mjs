@@ -27,12 +27,14 @@ function setMetric(m, v, labels) {
   metric.labels( labels || {} ).set(Number(v))
 }
 
-function processJsonObject(obj, prefix, params, recursive) {
+function processJsonObject(obj, prefix, params, recursive, valueMap = {}) {
   for (const [name, value] of Object.entries(obj)) {
     if (isNumeric(value)) {
       setMetric(globalPrefix + (prefix || '') + name.toLowerCase(), value, params)
     } else if (isObject(value) && recursive) {
-      processJsonObject(value, prefix + name.toLowerCase() + '_', params, recursive)
+      processJsonObject(value, prefix + name.toLowerCase() + '_', params, recursive, valueMap)
+    } else if (isObject(valueMap) && value in valueMap) {
+      setMetric(globalPrefix + (prefix || '') + name.toLowerCase(), valueMap[value], params)      
     } else {
       // TODO: Allow config to specify logging these as warn
       logger.debug(`Unsupported value '${value}' for metric name '${name}'`)
@@ -50,7 +52,7 @@ function processMessage(pattern, topic, message) {
   logger.debug(`Matched ${topic} to ${pattern.pattern} with ${JSON.stringify(params)}`)
   let msg = message.toString()
   
-  //logger.debug(params)
+  logger.debug(JSON.stringify(params))
   //logger.debug(msg)
   
   switch (pattern.format) {
@@ -64,12 +66,12 @@ function processMessage(pattern, topic, message) {
           value = pattern['value-map'][msg]
         }
       }
-      setMetric(globalPrefix + (pattern.prefix || '') + topic.split('/').pop().toLowerCase(), value, params)
+      setMetric(globalPrefix + (pattern.prefix || '') + topic.split('/').pop().toLowerCase(), value, { ...params, ...(pattern.labels || {})})
     } break
     default: {
       // json
       try {
-        processJsonObject(JSON.parse(msg), pattern.prefix, params, pattern.recursive)
+        processJsonObject(JSON.parse(msg), pattern.prefix, { ...params, ...(pattern.labels || {})}, pattern.recursive, pattern['value-map'] || {})
       } catch (e) {
         return logger.error(e)
       }
