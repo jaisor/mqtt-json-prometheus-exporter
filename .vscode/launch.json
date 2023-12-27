@@ -18,7 +18,7 @@
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "env": {
-        "LOG_LEVEL": "info"
+        "LOG_LEVEL": "debug"
       }
      },
      {
