@@ -30,6 +30,7 @@ patterns:
     format: json # 'json' is the default, other option is 'val' for a scalar value
     labels:  # additional labels to associate the metric with
       location: home
+    label-fields: [sensor_id] # payload fields whose values become labels instead of metrics
   - pattern: tele/+device/SENSOR
     prefix: tm_ # default prefix is blank
     recursive: Yes # also parse entries that are json objects themselves
@@ -43,6 +44,42 @@ patterns:
     value-map: # values mapped to numbers
       Online: 1
 ```
+
+### label-fields
+
+The `label-fields` option promotes payload fields to Prometheus labels rather than exporting them as metrics. This is useful when a field identifies the source of the data (e.g. a sensor ID or room name) and should instead be used to differentiate metric series.
+
+**Flat fields** — specify the field name directly:
+
+```yaml
+- pattern: home/+device/json
+  label-fields: [sensor_id, room]
+```
+
+Given the payload `{"temp": 22.5, "humidity": 60, "sensor_id": "abc", "room": "kitchen"}`, this produces:
+
+```
+mqtt_exporter_temp{device="...", sensor_id="abc", room="kitchen"} 22.5
+mqtt_exporter_humidity{device="...", sensor_id="abc", room="kitchen"} 60
+```
+
+**Nested fields** — use `→` to traverse into a nested object. The label name is the full path joined with `_`:
+
+```yaml
+- pattern: tele/+device/SENSOR
+  recursive: Yes
+  label-fields:
+    - telemetry→sender
+```
+
+Given the payload `{"temp": 22.5, "telemetry": {"sender": "device_01", "rssi": -45}}`, this produces:
+
+```
+tm_temp{device="...", telemetry_sender="device_01"} 22.5
+tm_telemetry_rssi{device="...", telemetry_sender="device_01"} -45
+```
+
+Flat `label-fields` entries propagate into nested objects when `recursive: Yes` is set, so the label is attached to all metrics at every level. Nested path entries (using `→`) only extract from the specified path and do not otherwise affect sibling fields.
 
 Start the docker container, mounting the configuration folder as a volume and selecting a favorable service port
 ```shell
