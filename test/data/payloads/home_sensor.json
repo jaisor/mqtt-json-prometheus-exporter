@@ -1,0 +1,8 @@
+{
+  "topic": "home/thermostat/json",
+  "payload": {
+    "temp": 21.5,
+    "humidity": 55,
+    "battery": 95
+  }
+}

@@ -16,13 +16,14 @@ function setMetric(m, v, labels) {
   }
   let metric = register.getSingleMetric(m)
   if (!metric) {
+    // registers: [register] avoids auto-registration in the global prom-client registry
     metric = new promClient.Gauge({
       name: m,
       help: `MQTT metric ${m}`,
       labelNames: isObject(labels) ? Object.keys(labels) : [],
+      registers: [register],
     })
     logger.info(`Registering '${m}'=${v} - ${JSON.stringify(labels)}`)
-    register.registerMetric(metric)
   }
   metric.labels( labels || {} ).set(Number(v))
 }

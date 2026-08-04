@@ -1,0 +1,11 @@
+global:
+  prefix: file_
+patterns:
+  - pattern: msh/US/2/json/JJA/!123456/+device/SENSOR
+    prefix: mesh_
+    recursive: true
+    label-fields: [from, type]
+  - pattern: home/+device/json
+    format: json
+    labels:
+      location: home
