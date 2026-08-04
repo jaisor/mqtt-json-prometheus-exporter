@@ -11,6 +11,7 @@ patterns:
     format: json # 'json' is the default, other option is 'val' for a scalar value
     labels:  # additional labels to associate the metric with
       location: home
+    label-fields: [sensor_id] # payload fields whose values become labels instead of metrics
   - pattern: tele/+device/SENSOR
     prefix: tm_ # default prefix is blank
     recursive: Yes # also parse entries that are json objects themselves
