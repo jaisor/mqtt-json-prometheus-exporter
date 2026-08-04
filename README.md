@@ -43,6 +43,11 @@ patterns:
     value-default: 0 # 0 is default if unspecified
     value-map: # values mapped to numbers
       Online: 1
+  - pattern: home/+device/status
+    format: json
+    value-map: # value-map also works for non-numeric string fields in json format
+      active: 1
+      inactive: 0
 ```
 
 ### label-fields
@@ -88,13 +93,14 @@ docker run -dit --restart unless-stopped --name mqtt-json-prometheus-exporter \
   jaisor/mqtt-json-prometheus-exporter:latest
 ```
 
-Optionally a different configuration location and log level can be specified using environment variables
+Optionally a different configuration location, log level, and HTTP port can be specified using environment variables
 ```
   -e CONFIG_PATH=/config \
   -e LOG_LEVEL=info \
+  -e PORT=8080 \
 ```
 
-After successful start the service will begin listening to HTTP GET `/metrics` with Prometheus compatible response
+After successful start the service will begin listening to HTTP GET `/metrics` with Prometheus compatible response. In addition to MQTT-derived metrics, standard Node.js process metrics (heap, CPU, event loop, etc.) are also exported automatically by [prom-client](https://github.com/siimon/prom-client#default-metrics) with the configured global prefix.
 
 ### Configure Prometheus 
 
@@ -111,10 +117,12 @@ Add the mqtt-json-prometheus-exporter service to Prometheus `config.yml` file
 
 ### Local npm
 
-Ensure the script has access to CONFIG_PATH environment variable pointing to the the folder containing `config.yaml`. Example `.env` file to accomplish this:
+Ensure the script has access to CONFIG_PATH environment variable pointing to the folder containing `config.yaml`. Example `.env` file to accomplish this:
 
 ```
 CONFIG_PATH=.config
+# LOG_LEVEL=debug
+# PORT=8080
 ```
 
 Install and run
