@@ -1,8 +1,8 @@
 {
-  "topic": "msh/US/2/json/JJA/!123456/device1/SENSOR",
+  "topic": "msh/US/2/json/JJA/123456",
   "payload": {
     "channel": 0,
-    "from": 2155854106,
+    "from": 123456789,
     "hop_start": 3,
     "hops_away": 0,
     "id": 422333797,
@@ -14,10 +14,10 @@
       "voltage": 4.04199981689453
     },
     "rssi": -54,
-    "sender": "!c1e41c48",
+    "sender": "123456",
     "snr": 5.25,
     "timestamp": 1785880244,
-    "to": 4294967295,
+    "to": 123456789,
     "type": "telemetry"
   }
 }

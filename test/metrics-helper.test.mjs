@@ -80,18 +80,19 @@ describe('file-based', () => {
     )
     assert.ok(dispatch(topic, JSON.stringify(payload)))
 
-    const channel = await findSample('file_mesh_channel', { device: 'device1', from: '2155854106', type: 'telemetry' })
-    assert.ok(channel, 'file_mesh_channel should be registered')
+    // global prefix is blank; pattern prefix is mesh_
+    const channel = await findSample('mesh_channel', { device: '123456', from: '123456789', type: 'telemetry' })
+    assert.ok(channel, 'mesh_channel should be registered')
     assert.equal(channel.value, 0)
 
-    const battery = await findSample('file_mesh_payload_battery_level', { device: 'device1', from: '2155854106', type: 'telemetry' })
-    assert.ok(battery, 'file_mesh_payload_battery_level should be registered')
+    const battery = await findSample('mesh_payload_battery_level', { device: '123456', from: '123456789', type: 'telemetry' })
+    assert.ok(battery, 'mesh_payload_battery_level should be registered')
     assert.equal(battery.value, 88)
 
     // label-fields 'from' and 'type' must not appear as standalone metrics
     const all = await register.getMetricsAsJSON()
-    assert.equal(all.find(m => m.name === 'file_mesh_from'), undefined, 'file_mesh_from must not be a metric')
-    assert.equal(all.find(m => m.name === 'file_mesh_type'), undefined, 'file_mesh_type must not be a metric')
+    assert.equal(all.find(m => m.name === 'mesh_from'), undefined, 'mesh_from must not be a metric')
+    assert.equal(all.find(m => m.name === 'mesh_type'), undefined, 'mesh_type must not be a metric')
   })
 
   it('home_sensor.json — flat JSON fields become metrics with location label', async () => {
@@ -100,12 +101,12 @@ describe('file-based', () => {
     )
     assert.ok(dispatch(topic, JSON.stringify(payload)))
 
-    const temp = await findSample('file_temp', { device: 'thermostat', location: 'home' })
-    assert.ok(temp, 'file_temp should be registered')
+    const temp = await findSample('temp', { device: 'thermostat', location: 'home' })
+    assert.ok(temp, 'temp should be registered')
     assert.equal(temp.value, 21.5)
 
-    const humidity = await findSample('file_humidity', { device: 'thermostat', location: 'home' })
-    assert.ok(humidity, 'file_humidity should be registered')
+    const humidity = await findSample('humidity', { device: 'thermostat', location: 'home' })
+    assert.ok(humidity, 'humidity should be registered')
     assert.equal(humidity.value, 55)
   })
 })
