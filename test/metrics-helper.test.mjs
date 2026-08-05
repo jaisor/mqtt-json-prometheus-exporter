@@ -52,6 +52,34 @@ describe('processMessage', () => {
       }
     })
   }
+
+  it('label-fields — two messages with different values produce distinct time series', async () => {
+    const pattern = { pattern: 'home/+device/json', format: 'json', 'label-fields': ['sensor_id'] }
+    processMessage(pattern, 'home/sensor/json', JSON.stringify({ temp: 22.5, sensor_id: 'abc' }))
+    processMessage(pattern, 'home/sensor/json', JSON.stringify({ temp: 25.0, sensor_id: 'xyz' }))
+
+    const sampleAbc = await findSample('test_temp', { device: 'sensor', sensor_id: 'abc' })
+    assert.ok(sampleAbc, 'series for sensor_id=abc should exist')
+    assert.equal(sampleAbc.value, 22.5)
+
+    const sampleXyz = await findSample('test_temp', { device: 'sensor', sensor_id: 'xyz' })
+    assert.ok(sampleXyz, 'series for sensor_id=xyz should exist')
+    assert.equal(sampleXyz.value, 25.0)
+  })
+
+  it('label-fields — Gauge re-registers when a label-fields key appears for the first time', async () => {
+    const pattern = { pattern: 'home/+device/json', format: 'json', 'label-fields': ['sensor_id'] }
+
+    // First message lacks sensor_id — Gauge is created without it in labelNames
+    processMessage(pattern, 'home/sensor/json', JSON.stringify({ temp: 22.5 }))
+
+    // Second message has sensor_id — would throw in prom-client without the fix
+    processMessage(pattern, 'home/sensor/json', JSON.stringify({ temp: 25.0, sensor_id: 'xyz' }))
+
+    const sample = await findSample('test_temp', { device: 'sensor', sensor_id: 'xyz' })
+    assert.ok(sample, 'series with sensor_id=xyz should exist after Gauge re-registration')
+    assert.equal(sample.value, 25.0)
+  })
 })
 
 describe('file-based', () => {
