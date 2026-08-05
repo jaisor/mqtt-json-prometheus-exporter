@@ -1,0 +1,23 @@
+{
+  "topic": "msh/US/2/json/JJA/123456",
+  "payload": {
+    "channel": 0,
+    "from": 123456789,
+    "hop_start": 3,
+    "hops_away": 0,
+    "id": 422333797,
+    "payload": {
+      "air_util_tx": 0.204888895153999,
+      "battery_level": 88,
+      "channel_utilization": 1.06833338737488,
+      "uptime_seconds": 59543,
+      "voltage": 4.04199981689453
+    },
+    "rssi": -54,
+    "sender": "123456",
+    "snr": 5.25,
+    "timestamp": 1785880244,
+    "to": 123456789,
+    "type": "telemetry"
+  }
+}

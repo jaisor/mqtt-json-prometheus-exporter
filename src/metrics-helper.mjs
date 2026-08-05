@@ -14,15 +14,31 @@ function setMetric(m, v, labels) {
     logger.warn(`Invalid metric name: ${m}`)
     return
   }
+  const newLabelNames = isObject(labels) ? Object.keys(labels) : []
   let metric = register.getSingleMetric(m)
-  if (!metric) {
+  if (metric) {
+    const unknownKeys = newLabelNames.filter(k => !metric.labelNames.includes(k))
+    if (unknownKeys.length > 0) {
+      // Label set grew (e.g. a label-fields key missing from the first message); re-register
+      const mergedNames = [...new Set([...metric.labelNames, ...newLabelNames])]
+      register.removeSingleMetric(m)
+      metric = new promClient.Gauge({
+        name: m,
+        help: `MQTT metric ${m}`,
+        labelNames: mergedNames,
+        registers: [register],
+      })
+      logger.warn(`Re-registering '${m}' with expanded labels: ${JSON.stringify(mergedNames)}`)
+    }
+  } else {
+    // registers: [register] avoids auto-registration in the global prom-client registry
     metric = new promClient.Gauge({
       name: m,
       help: `MQTT metric ${m}`,
-      labelNames: isObject(labels) ? Object.keys(labels) : [],
+      labelNames: newLabelNames,
+      registers: [register],
     })
     logger.info(`Registering '${m}'=${v} - ${JSON.stringify(labels)}`)
-    register.registerMetric(metric)
   }
   metric.labels( labels || {} ).set(Number(v))
 }
