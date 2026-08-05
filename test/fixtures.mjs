@@ -78,7 +78,7 @@ export const fixtures = [
       recursive: true,
       'label-fields': ['from', 'type'],
     },
-    topic: 'msh/US/2/json/JJA/!123456',
+    topic: 'msh/US/2/json/JJA/123456',
     payload: JSON.stringify({
       channel: 0,
       from: 2155854106,
@@ -101,9 +101,9 @@ export const fixtures = [
     }),
     expected: [
       // 'from' and 'type' are label-fields — they appear as labels on every metric, not as metrics themselves
-      { name: 'test_mesh_channel',                  value: 0,   labels: { device: '!123456', from: '2155854106', type: 'telemetry' } },
-      { name: 'test_mesh_rssi',                     value: -54, labels: { device: '!123456', from: '2155854106', type: 'telemetry' } },
-      { name: 'test_mesh_payload_battery_level',    value: 88,  labels: { device: '!123456', from: '2155854106', type: 'telemetry' } },
+      { name: 'test_mesh_channel',                  value: 0,   labels: { device: '123456', from: '2155854106', type: 'telemetry' } },
+      { name: 'test_mesh_rssi',                     value: -54, labels: { device: '123456', from: '2155854106', type: 'telemetry' } },
+      { name: 'test_mesh_payload_battery_level',    value: 88,  labels: { device: '123456', from: '2155854106', type: 'telemetry' } },
     ],
     absent: ['test_mesh_from', 'test_mesh_type'],
   },
