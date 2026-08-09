@@ -33,6 +33,8 @@ patterns:
     labels:
       location: home
     label-fields: [from, type]
+    value-map:
+      123456789: HUMAN
   - pattern: rf/+device/+message/json
     format: json
     prefix: rf_
