@@ -109,11 +109,12 @@ describe('file-based', () => {
     assert.ok(dispatch(topic, JSON.stringify(payload)))
 
     // global prefix is blank; pattern prefix is mesh_
-    const channel = await findSample('mesh_channel', { device: '123456', from: '123456789', type: 'telemetry' })
+    // value-map maps 123456789 → HUMAN, so the 'from' label should be 'HUMAN'
+    const channel = await findSample('mesh_channel', { device: '123456', from: 'HUMAN', type: 'telemetry' })
     assert.ok(channel, 'mesh_channel should be registered')
     assert.equal(channel.value, 0)
 
-    const battery = await findSample('mesh_payload_battery_level', { device: '123456', from: '123456789', type: 'telemetry' })
+    const battery = await findSample('mesh_payload_battery_level', { device: '123456', from: 'HUMAN', type: 'telemetry' })
     assert.ok(battery, 'mesh_payload_battery_level should be registered')
     assert.equal(battery.value, 88)
 

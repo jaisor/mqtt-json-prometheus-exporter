@@ -109,7 +109,7 @@ export const fixtures = [
   },
 
   {
-    description: 'JSON — label-fields value is NOT transformed by value-map',
+    description: 'JSON — label-fields value IS transformed by value-map',
     pattern: {
       pattern: 'home/+device/json',
       format: 'json',
@@ -119,9 +119,28 @@ export const fixtures = [
     topic: 'home/sensor1/json',
     payload: JSON.stringify({ temp: 22.5, mode: 'active' }),
     expected: [
-      { name: 'test_temp', value: 22.5, labels: { device: 'sensor1', mode: 'active' } },
+      { name: 'test_temp', value: 22.5, labels: { device: 'sensor1', mode: '1' } },
     ],
     absent: ['test_mode'],
+  },
+
+  {
+    description: 'JSON — label-fields with value-map maps numeric from field to human-readable label',
+    pattern: {
+      pattern: 'msh/+country/+channel/json/+area/+device',
+      prefix: 'mesh_',
+      recursive: true,
+      labels: { location: 'home' },
+      'label-fields': ['from', 'type'],
+      'value-map': { '123456789': 'HUMAN' },
+    },
+    topic: 'msh/US/2/json/JJA/123456',
+    payload: JSON.stringify({ channel: 0, from: 123456789, rssi: -54, type: 'telemetry' }),
+    expected: [
+      { name: 'test_mesh_channel', value: 0,   labels: { device: '123456', from: 'HUMAN', type: 'telemetry', location: 'home' } },
+      { name: 'test_mesh_rssi',    value: -54, labels: { device: '123456', from: 'HUMAN', type: 'telemetry', location: 'home' } },
+    ],
+    absent: ['test_mesh_from', 'test_mesh_type'],
   },
 
   {
