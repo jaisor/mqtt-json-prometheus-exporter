@@ -86,6 +86,18 @@ tm_telemetry_rssi{device="...", telemetry_sender="device_01"} -45
 
 Flat `label-fields` entries propagate into nested objects when `recursive: Yes` is set, so the label is attached to all metrics at every level. Nested path entries (using `→`) only extract from the specified path and do not otherwise affect sibling fields.
 
+**value-map on label fields** — when a `value-map` is also configured, string values extracted for labels are converted through the map before being set. This lets you normalise a label value the same way you would a metric field:
+
+```yaml
+- pattern: home/+device/json
+  label-fields: [mode]
+  value-map:
+    active: 1
+    standby: 0
+```
+
+Given `{"temp": 22.5, "mode": "active"}`, the label becomes `mode="1"` rather than `mode="active"`.
+
 Start the docker container, mounting the configuration folder as a volume and selecting a favorable service port
 ```shell
 docker run -dit --restart unless-stopped --name mqtt-json-prometheus-exporter \
