@@ -109,7 +109,7 @@ export const fixtures = [
   },
 
   {
-    description: 'JSON — label-fields value passes through value-map',
+    description: 'JSON — label-fields value is NOT transformed by value-map',
     pattern: {
       pattern: 'home/+device/json',
       format: 'json',
@@ -119,7 +119,7 @@ export const fixtures = [
     topic: 'home/sensor1/json',
     payload: JSON.stringify({ temp: 22.5, mode: 'active' }),
     expected: [
-      { name: 'test_temp', value: 22.5, labels: { device: 'sensor1', mode: '1' } },
+      { name: 'test_temp', value: 22.5, labels: { device: 'sensor1', mode: 'active' } },
     ],
     absent: ['test_mode'],
   },
