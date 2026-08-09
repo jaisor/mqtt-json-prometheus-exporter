@@ -60,7 +60,9 @@ function processJsonObject(obj, prefix, params, recursive, valueMap = {}, labelP
   for (const pathParts of labelPaths) {
     const value = extractLabelFromPath(obj, pathParts)
     if (value !== undefined) {
-      extractedLabels[pathParts.join('_')] = String(value)
+      const strValue = String(value)
+      const mappedValue = isObject(valueMap) && strValue in valueMap ? valueMap[strValue] : strValue
+      extractedLabels[pathParts.join('_')] = String(mappedValue)
     }
   }
   const mergedParams = { ...params, ...extractedLabels }
